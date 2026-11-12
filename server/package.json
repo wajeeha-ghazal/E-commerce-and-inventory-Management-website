@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "build": "npm run build --workspace=@ecomm/shared && tsc",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "migrate": "sequelize-cli db:migrate",
