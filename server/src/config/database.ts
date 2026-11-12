@@ -13,7 +13,7 @@ const dialectOptions = isSupabaseOrRemote
   ? {
       ssl: {
         require: true,
-        rejectUnauthorized: false, //client side verification of the server's SSL certificate is disabled
+        rejectUnauthorized: true, //client side verification of the server's SSL certificate is disabled
       },
     }
   : {};
