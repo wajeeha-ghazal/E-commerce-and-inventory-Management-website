@@ -1,5 +1,7 @@
 import { Sequelize } from 'sequelize';
 import { config } from './env';
+import pg from 'pg';
+
 
 let sequelize: Sequelize;
 
@@ -22,6 +24,7 @@ if (config.databaseUrl) {
   sequelize = new Sequelize(config.databaseUrl, {
     dialect: 'postgres',
     dialectOptions,
+    dialectModule: pg,
     logging: config.isProduction ? false : console.log,
   });
 } else {
