@@ -2,11 +2,11 @@
   "name": "@ecomm/client",
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview"
-  },
+ "scripts": {
+  "dev": "vite",
+  "build": "npm run build --workspace=@ecomm/shared --if-present && tsc && vite build",
+  "preview": "vite preview"
+},
   "dependencies": {
     "@ecomm/shared": "*",
     "@reduxjs/toolkit": "^2.2.5",
