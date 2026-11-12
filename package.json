@@ -1,0 +1,35 @@
+{
+  "name": "ecomm-platform-root",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue,magenta\" \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm --workspace=server run dev",
+    "dev:client": "npm --workspace=client run dev",
+    "build:shared": "npm --workspace=shared run build",
+    "build:server": "npm --workspace=server run build",
+    "build:client": "npm --workspace=client run build",
+    "build": "npm run build:shared && npm run build:server && npm run build:client",
+    "test:server": "npm --workspace=server run test",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,scss,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,scss,css}\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.14.0",
+    "prettier": "^3.10.1",
+    "typescript-eslint": "^8.72.2"
+  }
+}
