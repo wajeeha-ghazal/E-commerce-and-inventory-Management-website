@@ -1,9 +1,9 @@
 import { Op, Order as SequelizeOrder } from 'sequelize';
 import { Product, Category } from '../../db/models';
 import { AppError } from '../../utils/AppError';
-import { DEFAULT_PAGE_SIZE } from '@ecomm/shared/src/constants';
-import type { ProductDTO, CategoryDTO, ProductQueryParams } from '@ecomm/shared/src/product';
-import type { PaginatedResult } from '@ecomm/shared/src/api';
+import { DEFAULT_PAGE_SIZE } from '@ecomm/shared';
+import type { ProductDTO, CategoryDTO, ProductQueryParams } from '@ecomm/shared';
+import type { PaginatedResult } from '@ecomm/shared';
 
 function formatCategoryDTO(cat: Category): CategoryDTO {
   return {

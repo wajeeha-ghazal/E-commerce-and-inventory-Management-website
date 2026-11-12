@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { productsService } from './products.service';
 import { asyncHandler } from '../../utils/asyncHandler';
-import type { ProductQueryParams } from '@ecomm/shared/src/product';
+import type { ProductQueryParams } from '@ecomm/shared';
 
 export const productsController = {
   getProducts: asyncHandler(async (req: Request, res: Response, _next: NextFunction) => {

@@ -1,5 +1,5 @@
 import { Category } from '../../db/models';
-import type { CategoryDTO } from '@ecomm/shared/src/product';
+import type { CategoryDTO } from '@ecomm/shared';
 
 function formatCategoryDTO(cat: Category): CategoryDTO {
   return {
