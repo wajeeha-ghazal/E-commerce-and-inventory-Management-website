@@ -42,7 +42,7 @@ import type {
   CreateProductInput,
   CreateCategoryInput,
 } from '@ecomm/shared';
-import { ORDER_STATUSES } from '@ecomm/shared';
+import { ORDER_STATUSES } from '@ecomm/shared/src/constants';
 
 export const AdminDashboardPage: React.FC = () => {
   const dispatch = useAppDispatch();

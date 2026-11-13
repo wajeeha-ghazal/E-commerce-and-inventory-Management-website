@@ -1,6 +1,8 @@
 import { createSlice, createSelector, PayloadAction } from '@reduxjs/toolkit';
-import { TAX_RATE } from '@ecomm/shared';
-import type { ProductDTO, CartItem } from '@ecomm/shared';
+import { TAX_RATE } from '@ecomm/shared/src/constants';
+import type { ProductDTO } from '@ecomm/shared/src/product';
+import type { CartItem } from '@ecomm/shared/src/order';
+
 import { fetchMe, loginUser, logoutUser, resetAuth } from '../auth/authSlice';
 import { placeOrder } from '../orders/orderSlice';
 
