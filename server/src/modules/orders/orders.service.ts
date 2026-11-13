@@ -91,7 +91,7 @@ export class OrdersService {
       // Step 2: Fetch products with row-level lock
       const products = await Product.findAll({
         where: { id: sortedIds },
-        order: [['id', 'ASC']],
+        order: [['id', 'ASC']],          
         lock: t.LOCK.UPDATE,
         transaction: t,
       });

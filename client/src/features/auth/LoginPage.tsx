@@ -21,7 +21,10 @@ export const LoginPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const { isAuthenticated, status, error, fieldErrors } = useAppSelector((state) => state.auth);
 
-  const from = (location.state as any)?.from?.pathname || '/';
+  const from =
+    typeof location.state?.from === 'string'
+      ? location.state.from
+      : location.state?.from?.pathname || '/';
 
   useEffect(() => {
     dispatch(clearAuthError());
@@ -125,7 +128,7 @@ export const LoginPage: React.FC = () => {
             <div className="text-center mt-3">
               <span className="text-secondary small">
                 Don't have an account yet?{' '}
-                <Link to="/register" className="text-terracotta fw-semibold text-decoration-none">
+                <Link to="/register" state={location.state} className="text-terracotta fw-semibold text-decoration-none">
                   Create an account
                 </Link>
               </span>

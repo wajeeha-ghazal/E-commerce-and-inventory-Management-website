@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, Button } from 'react-bootstrap';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import type { ProductDTO } from '@ecomm/shared/src/product';
 import StockBadge from '../../components/ui/StockBadge';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -13,9 +13,6 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
   const availableStock = useAppSelector(selectAvailableStock(product));
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const fallbackImage = 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=400&q=80';
 
@@ -54,11 +51,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (!isAuthenticated) {
-                  navigate('/register', { state: { from: location } });
-                  return;
-                }
-
                 dispatch(addToCart({ product, quantity: 1 }));
               }}
             >

@@ -31,7 +31,10 @@ export const RegisterPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { isAuthenticated, status, error, fieldErrors } = useAppSelector((state) => state.auth);
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/';
+  const from =
+    typeof location.state?.from === 'string'
+      ? location.state.from
+      : location.state?.from?.pathname || '/';
 
   useEffect(() => {
     dispatch(clearAuthError());
@@ -236,7 +239,7 @@ export const RegisterPage: React.FC = () => {
             <div className="text-center mt-3">
               <span className="text-secondary small">
                 Already have an account?{' '}
-                <Link to="/login" className="text-terracotta fw-semibold text-decoration-none">
+                <Link to="/login" state={location.state} className="text-terracotta fw-semibold text-decoration-none">
                   Sign in instead
                 </Link>
               </span>

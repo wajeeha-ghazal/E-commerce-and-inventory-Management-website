@@ -1,4 +1,4 @@
-import React from 'react';
+import React ,{useState} from 'react';
 import { Offcanvas, Button, Badge } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
@@ -25,10 +25,26 @@ export const CartDrawer: React.FC = () => {
   const subtotal = useAppSelector(selectCartSubtotal);
   const tax = useAppSelector(selectCartTax);
   const total = useAppSelector(selectCartTotal);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
+  const [requiresAuth, setRequiresAuth] = useState(false);
 
-  const handleClose = () => dispatch(closeCart());
+  const handleClose = () => {
+    setRequiresAuth(false);
+    dispatch(closeCart());
+  };
+
+  const handleGoToAuth = (path: '/login' | '/register') => {
+    setRequiresAuth(false);
+    dispatch(closeCart());
+    navigate(path, { state: { from: '/checkout' } });
+  };
 
   const handleCheckout = () => {
+    if (!isAuthenticated) {
+      setRequiresAuth(true);
+      return;
+    }
+    setRequiresAuth(false);
     dispatch(closeCart());
     navigate('/checkout');
   };
@@ -191,6 +207,31 @@ export const CartDrawer: React.FC = () => {
               </div>
 
               <div className="d-flex flex-column gap-2">
+                {requiresAuth && (
+                  <div className="p-3 rounded-3 bg-cream border border-warm text-center mb-1">
+                    <p className="small text-muted mb-2">
+                      Please sign in or create an account to complete your checkout.
+                    </p>
+                    <div className="d-flex justify-content-center gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline-dark"
+                        className="px-3 rounded-2"
+                        onClick={() => handleGoToAuth('/login')}
+                      >
+                        Sign In
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="btn-terracotta px-3 rounded-2"
+                        onClick={() => handleGoToAuth('/register')}
+                      >
+                        Create Account
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
                 <Button
                   className="btn-terracotta w-100 py-2 rounded-3 fw-semibold"
                   onClick={handleCheckout}

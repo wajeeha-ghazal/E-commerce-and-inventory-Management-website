@@ -3,7 +3,7 @@ import { TAX_RATE } from '@ecomm/shared/src/constants';
 import type { ProductDTO } from '@ecomm/shared/src/product';
 import type { CartItem } from '@ecomm/shared/src/order';
 
-import { fetchMe, loginUser, logoutUser, resetAuth } from '../auth/authSlice';
+import { fetchMe, loginUser, registerUser, logoutUser, resetAuth } from '../auth/authSlice';
 import { placeOrder } from '../orders/orderSlice';
 
 export type { CartItem };
@@ -38,6 +38,34 @@ export const saveCartToStorage = (items: CartItem[], userId?: number | string | 
     console.error('Failed to save cart to localStorage:', err);
   }
 };
+export const mergeCart = (guestItems: CartItem[], userItems: CartItem[]): CartItem[] => {
+  const merged = guestItems.map((guestItem) => ({ ...guestItem }));
+  userItems.forEach((userItem) => {
+    const existing = merged.find((item) => item.productId === userItem.productId);
+    if (existing) {
+      existing.quantity = Math.min(existing.quantity + userItem.quantity, existing.stock);
+    } else {
+      merged.push({ ...userItem });
+    }
+  });
+  return merged;
+};
+
+const syncUserCart = (state: CartState, newUserId: number | null) => {
+  if (newUserId !== null) {
+    const userItems = loadCartFromStorage(newUserId);
+    state.items = mergeCart(state.items, userItems);
+    saveCartToStorage(state.items, newUserId);
+    try {
+      localStorage.removeItem(getCartStorageKey(null));
+    } catch {
+      // Ignore storage errors
+    }
+  } else {
+    state.items = loadCartFromStorage(null);
+  }
+  state.userId = newUserId;
+};
 
 const initialState: CartState = {
   items: loadCartFromStorage(null),
@@ -50,9 +78,6 @@ export const cartSlice = createSlice({
   initialState,
   reducers: {
     addToCart(state, action: PayloadAction<{ product: ProductDTO; quantity?: number }>) {
-      if (!state.userId) {
-        return;
-      }
       const { product, quantity = 1 } = action.payload;
       if (!product || product.stock <= 0 || quantity <= 0) return;
 
@@ -116,64 +141,26 @@ export const cartSlice = createSlice({
     },
 
     setUserId(state, action: PayloadAction<number | null>) {
-      const newUserId = action.payload;
-      if (state.userId !== newUserId) {
-        const guestItems = loadCartFromStorage(null);
-        const userItems = newUserId ? loadCartFromStorage(newUserId) : [];
-
-        if (newUserId) {
-          // Merge guest cart into authenticated user cart
-          const mergedMap = new Map<number, CartItem>();
-          userItems.forEach((item) => mergedMap.set(item.productId, { ...item }));
-          guestItems.forEach((guestItem) => {
-            const existing = mergedMap.get(guestItem.productId);
-            if (existing) {
-              existing.quantity = Math.min(existing.quantity + guestItem.quantity, existing.stock);
-            } else {
-              mergedMap.set(guestItem.productId, { ...guestItem });
-            }
-          });
-          state.items = Array.from(mergedMap.values());
-          state.userId = newUserId;
-          saveCartToStorage(state.items, newUserId);
-          try {
-            localStorage.removeItem(getCartStorageKey(null));
-          } catch {
-            // Ignore storage errors
-          }
-        } else {
-          // Switched to guest
-          state.userId = null;
-          state.items = guestItems;
-        }
-      }
+      syncUserCart(state, action.payload);
     },
   },
+
   extraReducers: (builder) => {
     builder
       .addCase(fetchMe.fulfilled, (state, action) => {
-        cartSlice.caseReducers.setUserId(state, {
-          type: 'cart/setUserId',
-          payload: action.payload.id,
-        });
+        syncUserCart(state, action.payload.id);
       })
       .addCase(loginUser.fulfilled, (state, action) => {
-        cartSlice.caseReducers.setUserId(state, {
-          type: 'cart/setUserId',
-          payload: action.payload.id,
-        });
+        syncUserCart(state, action.payload.id);
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        syncUserCart(state, action.payload.id);
       })
       .addCase(logoutUser.fulfilled, (state) => {
-        cartSlice.caseReducers.setUserId(state, {
-          type: 'cart/setUserId',
-          payload: null,
-        });
+        syncUserCart(state, null);
       })
       .addCase(resetAuth, (state) => {
-        cartSlice.caseReducers.setUserId(state, {
-          type: 'cart/setUserId',
-          payload: null,
-        });
+        syncUserCart(state, null);
       })
       .addCase(placeOrder.fulfilled, (state) => {
         state.items = [];
