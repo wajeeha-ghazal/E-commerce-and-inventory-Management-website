@@ -12,7 +12,9 @@ export const adminController = {
   // Products
   getProducts: asyncHandler(async (req: Request, res: Response) => {
     const includeDeleted = req.query['includeDeleted'] === 'true';
-    const data = await adminService.getProducts(includeDeleted);
+    const page = req.query['page'] ? parseInt(req.query['page'] as string, 10) : undefined;
+    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string, 10) : undefined;
+    const data = await adminService.getProducts({ includeDeleted, page, limit });
     res.json({ success: true, data });
   }),
 
@@ -40,8 +42,11 @@ export const adminController = {
   }),
 
   // Categories
-  getCategories: asyncHandler(async (_req: Request, res: Response) => {
-    const data = await adminService.getCategories();
+  getCategories: asyncHandler(async (req: Request, res: Response) => {
+    const includeDeleted = req.query['includeDeleted'] === 'true';
+    const page = req.query['page'] ? parseInt(req.query['page'] as string, 10) : undefined;
+    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string, 10) : undefined;
+    const data = await adminService.getCategories({ includeDeleted, page, limit });
     res.json({ success: true, data });
   }),
 
@@ -59,13 +64,21 @@ export const adminController = {
   deleteCategory: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
     const data = await adminService.deleteCategory(id);
-    res.json({ success: true, data });
+    res.json({ success: true, data, message: 'Category soft-deleted successfully' });
+  }),
+
+  restoreCategory: asyncHandler(async (req: Request, res: Response) => {
+    const id = parseInt(req.params['id'] ?? '', 10);
+    const data = await adminService.restoreCategory(id);
+    res.json({ success: true, data, message: 'Category restored successfully' });
   }),
 
   // Orders
   getOrders: asyncHandler(async (req: Request, res: Response) => {
     const status = req.query['status'] as OrderStatus | undefined;
-    const data = await adminService.getOrders(status);
+    const page = req.query['page'] ? parseInt(req.query['page'] as string, 10) : undefined;
+    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string, 10) : undefined;
+    const data = await adminService.getOrders({ status, page, limit });
     res.json({ success: true, data });
   }),
 
@@ -77,8 +90,10 @@ export const adminController = {
   }),
 
   // Users
-  getUsers: asyncHandler(async (_req: Request, res: Response) => {
-    const data = await adminService.getUsers();
+  getUsers: asyncHandler(async (req: Request, res: Response) => {
+    const page = req.query['page'] ? parseInt(req.query['page'] as string, 10) : undefined;
+    const limit = req.query['limit'] ? parseInt(req.query['limit'] as string, 10) : undefined;
+    const data = await adminService.getUsers({ page, limit });
     res.json({ success: true, data });
   }),
 

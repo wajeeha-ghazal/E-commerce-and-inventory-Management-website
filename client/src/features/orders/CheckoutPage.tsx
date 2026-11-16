@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate, Link } from 'react-router-dom';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import {
   selectCartItems,
@@ -9,6 +11,14 @@ import {
   selectCartTotal,
 } from '../cart/cartSlice';
 import { placeOrder } from './orderSlice';
+
+const CheckoutSchema = Yup.object().shape({
+  shippingAddress: Yup.string()
+    .trim()
+    .min(5, 'Please provide a complete shipping address (at least 5 characters)')
+    .max(1000, 'Shipping address cannot exceed 1000 characters')
+    .required('Shipping address is required'),
+});
 
 const generateIdempotencyKey = (): string =>
   typeof crypto !== 'undefined' && crypto.randomUUID
@@ -27,53 +37,32 @@ export const CheckoutPage: React.FC = () => {
   const orderStatus = useAppSelector((state) => state.orders.status);
   const orderError = useAppSelector((state) => state.orders.error);
 
-  const [shippingAddress, setShippingAddress] = useState(
-    () => user?.profile?.shippingAddress || ''
-  );
-  const [addressError, setAddressError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [idempotencyKey] = useState<string>(() => generateIdempotencyKey());
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const formik = useFormik({
+    enableReinitialize: true,
+    initialValues: {
+      shippingAddress: user?.profile?.shippingAddress || '',
+    },
+    validationSchema: CheckoutSchema,
+    onSubmit: async (values) => {
+      if (items.length === 0) return;
 
-    if (!shippingAddress.trim()) {
-      setAddressError('Shipping address is required');
-      return;
-    }
-    if (shippingAddress.trim().length < 5) {
-      setAddressError('Please provide a complete shipping address (at least 5 characters)');
-      return;
-    }
-    setAddressError(null);
-
-    if (items.length === 0) return;
-    if (isSubmitting || orderStatus === 'loading') return;
-
-    setIsSubmitting(true);
-
-    try {
-      // Submits ONLY { items: [{ productId, quantity }], shippingAddress }
-      // Client prices are completely ignored to prevent tampering
       const payload = {
         items: items.map((item) => ({
           productId: item.productId,
           quantity: item.quantity,
         })),
-        shippingAddress: shippingAddress.trim(),
+        shippingAddress: values.shippingAddress.trim(),
         idempotencyKey,
       };
 
       const resultAction = await dispatch(placeOrder(payload));
-
       if (placeOrder.fulfilled.match(resultAction)) {
-        const createdOrder = resultAction.payload;
-        navigate(`/orders/${createdOrder.id}`);
+        navigate(`/orders/${resultAction.payload.id}`);
       }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+    },
+  });
 
   if (items.length === 0) {
     return (
@@ -96,7 +85,7 @@ export const CheckoutPage: React.FC = () => {
     );
   }
 
-  const isLoading = isSubmitting || orderStatus === 'loading';
+  const isLoading = formik.isSubmitting || orderStatus === 'loading';
 
   return (
     <div className="py-2 py-md-4 w-100 overflow-hidden">
@@ -134,7 +123,7 @@ export const CheckoutPage: React.FC = () => {
               </h5>
             </Card.Header>
             <Card.Body className="p-3 p-sm-4">
-              <Form onSubmit={handleSubmit}>
+              <Form onSubmit={formik.handleSubmit}>
                 {user && (
                   <div className="p-3 bg-cream rounded-3 border border-warm mb-3 small">
                     <div className="d-flex justify-content-between text-muted mb-1">
@@ -156,16 +145,19 @@ export const CheckoutPage: React.FC = () => {
                     as="textarea"
                     rows={4}
                     placeholder="Enter street address, apartment/suite, city, state, and ZIP code..."
-                    value={shippingAddress}
-                    onChange={(e) => {
-                      setShippingAddress(e.target.value);
-                      if (addressError) setAddressError(null);
-                    }}
-                    isInvalid={!!addressError}
+                    name="shippingAddress"
+                    value={formik.values.shippingAddress}
+                    onChange={formik.handleChange}
+                    onBlur={formik.handleBlur}
+                    isInvalid={
+                      formik.touched.shippingAddress && !!formik.errors.shippingAddress
+                    }
                     disabled={isLoading}
                     className="border-warm rounded-3"
                   />
-                  <Form.Control.Feedback type="invalid">{addressError}</Form.Control.Feedback>
+                  <Form.Control.Feedback type="invalid">
+                    {formik.errors.shippingAddress}
+                  </Form.Control.Feedback>
                   <Form.Text className="text-muted small">
                     Please ensure the address is correct for accurate delivery.
                   </Form.Text>

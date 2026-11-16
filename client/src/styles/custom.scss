@@ -46,6 +46,10 @@ h4,
   color: #ffffff;
 }
 
+.nav-pills .nav-link.active i {
+  color: #ffffff !important;
+}
+
 .bg-cream {
   background-color: #faf7f2 !important;
 }
@@ -122,6 +126,11 @@ h4,
   &:hover .product-card-hover-bar {
     transform: translateY(0);
     opacity: 1;
+  }
+
+  &.add-to-cart-bar-hidden .product-card-hover-bar {
+    transform: translateY(100%);
+    opacity: 0;
   }
 
   .hover-add-btn {

@@ -161,21 +161,24 @@ export const restoreAdminProduct = createAsyncThunk<ProductDTO, number, { reject
 );
 
 // 3. Categories
-export const fetchAdminCategories = createAsyncThunk<CategoryDTO[], void, { rejectValue: string }>(
-  'admin/fetchAdminCategories',
-  async (_, { rejectWithValue }) => {
-    try {
-      const res = await api.get<ApiResponse<CategoryDTO[]>>('/admin/categories');
-      if (res.data.success) {
-        return res.data.data;
-      }
-      return rejectWithValue('Failed to load categories');
-    } catch (err) {
-      const error = err as AxiosError<ApiErrorResponse>;
-      return rejectWithValue(error.response?.data?.error?.message || 'Failed to load categories');
+export const fetchAdminCategories = createAsyncThunk<
+  CategoryDTO[],
+  boolean | undefined,
+  { rejectValue: string }
+>('admin/fetchAdminCategories', async (includeDeleted = false, { rejectWithValue }) => {
+  try {
+    const res = await api.get<ApiResponse<CategoryDTO[]>>('/admin/categories', {
+      params: includeDeleted ? { includeDeleted: 'true' } : {},
+    });
+    if (res.data.success) {
+      return res.data.data;
     }
+    return rejectWithValue('Failed to load categories');
+  } catch (err) {
+    const error = err as AxiosError<ApiErrorResponse>;
+    return rejectWithValue(error.response?.data?.error?.message || 'Failed to load categories');
   }
-);
+});
 
 export const createAdminCategory = createAsyncThunk<
   CategoryDTO,
@@ -226,6 +229,23 @@ export const deleteAdminCategory = createAsyncThunk<number, number, { rejectValu
     }
   }
 );
+
+export const restoreAdminCategory = createAsyncThunk<
+  CategoryDTO,
+  number,
+  { rejectValue: string }
+>('admin/restoreAdminCategory', async (id, { rejectWithValue }) => {
+  try {
+    const res = await api.patch<ApiResponse<CategoryDTO>>(`/admin/categories/${id}/restore`);
+    if (res.data.success) {
+      return res.data.data;
+    }
+    return rejectWithValue('Failed to restore category');
+  } catch (err) {
+    const error = err as AxiosError<ApiErrorResponse>;
+    return rejectWithValue(error.response?.data?.error?.message || 'Failed to restore category');
+  }
+});
 
 // 4. Global Orders
 export const fetchAdminOrders = createAsyncThunk<
@@ -339,21 +359,37 @@ export const adminSlice = createSlice({
       .addCase(createAdminProduct.fulfilled, (state, action) => {
         state.products.unshift(action.payload);
         state.successMessage = 'Product created successfully';
+        state.error = null;
+      })
+      .addCase(createAdminProduct.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to create product';
       })
       .addCase(updateAdminProduct.fulfilled, (state, action) => {
         const idx = state.products.findIndex((p) => p.id === action.payload.id);
         if (idx >= 0) state.products[idx] = action.payload;
         state.successMessage = 'Product updated successfully';
+        state.error = null;
+      })
+      .addCase(updateAdminProduct.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update product';
       })
       .addCase(deleteAdminProduct.fulfilled, (state, action) => {
         const idx = state.products.findIndex((p) => p.id === action.payload.id);
         if (idx >= 0) state.products[idx] = action.payload;
         state.successMessage = 'Product soft-deleted successfully';
+        state.error = null;
+      })
+      .addCase(deleteAdminProduct.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to delete product';
       })
       .addCase(restoreAdminProduct.fulfilled, (state, action) => {
         const idx = state.products.findIndex((p) => p.id === action.payload.id);
         if (idx >= 0) state.products[idx] = action.payload;
         state.successMessage = 'Product restored successfully';
+        state.error = null;
+      })
+      .addCase(restoreAdminProduct.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to restore product';
       });
 
     // Categories
@@ -365,18 +401,50 @@ export const adminSlice = createSlice({
         state.categoriesLoading = false;
         state.categories = action.payload;
       })
+      .addCase(fetchAdminCategories.rejected, (state, action) => {
+        state.categoriesLoading = false;
+        state.error = action.payload || 'Failed to load categories';
+      })
       .addCase(createAdminCategory.fulfilled, (state, action) => {
         state.categories.push(action.payload);
         state.successMessage = 'Category created successfully';
+        state.error = null;
+      })
+      .addCase(createAdminCategory.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to create category';
       })
       .addCase(updateAdminCategory.fulfilled, (state, action) => {
         const idx = state.categories.findIndex((c) => c.id === action.payload.id);
         if (idx >= 0) state.categories[idx] = action.payload;
         state.successMessage = 'Category updated successfully';
+        state.error = null;
+      })
+      .addCase(updateAdminCategory.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update category';
       })
       .addCase(deleteAdminCategory.fulfilled, (state, action) => {
-        state.categories = state.categories.filter((c) => c.id !== action.payload);
-        state.successMessage = 'Category deleted successfully';
+        const idx = state.categories.findIndex((c) => c.id === action.payload);
+        if (idx >= 0) {
+          state.categories[idx].deletedAt = new Date().toISOString();
+        }
+        state.successMessage = 'Category soft-deleted successfully';
+        state.error = null;
+      })
+      .addCase(deleteAdminCategory.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to delete category';
+      })
+      .addCase(restoreAdminCategory.fulfilled, (state, action) => {
+        const idx = state.categories.findIndex((c) => c.id === action.payload.id);
+        if (idx >= 0) {
+          state.categories[idx] = action.payload;
+        } else {
+          state.categories.push(action.payload);
+        }
+        state.successMessage = 'Category restored successfully';
+        state.error = null;
+      })
+      .addCase(restoreAdminCategory.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to restore category';
       });
 
     // Orders
@@ -388,10 +456,18 @@ export const adminSlice = createSlice({
         state.ordersLoading = false;
         state.orders = action.payload;
       })
+      .addCase(fetchAdminOrders.rejected, (state, action) => {
+        state.ordersLoading = false;
+        state.error = action.payload || 'Failed to load orders';
+      })
       .addCase(updateAdminOrderStatus.fulfilled, (state, action) => {
         const idx = state.orders.findIndex((o) => o.id === action.payload.id);
         if (idx >= 0) state.orders[idx] = action.payload;
         state.successMessage = `Order #${action.payload.id} updated to "${action.payload.status}"`;
+        state.error = null;
+      })
+      .addCase(updateAdminOrderStatus.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update order status';
       });
 
     // Users
@@ -403,10 +479,18 @@ export const adminSlice = createSlice({
         state.usersLoading = false;
         state.users = action.payload;
       })
+      .addCase(fetchAdminUsers.rejected, (state, action) => {
+        state.usersLoading = false;
+        state.error = action.payload || 'Failed to load users';
+      })
       .addCase(updateAdminUserRole.fulfilled, (state, action) => {
         const idx = state.users.findIndex((u) => u.id === action.payload.id);
         if (idx >= 0) state.users[idx] = action.payload;
         state.successMessage = `User #${action.payload.id} role updated to "${action.payload.role}"`;
+        state.error = null;
+      })
+      .addCase(updateAdminUserRole.rejected, (state, action) => {
+        state.error = action.payload || 'Failed to update user role';
       });
   },
 });

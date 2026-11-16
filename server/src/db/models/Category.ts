@@ -19,6 +19,7 @@ export class Category extends Model<
   declare description: CreationOptional<string>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+  declare deletedAt: CreationOptional<Date | null>;
 
   // Associations
   declare products?: NonAttribute<Product[]>;
@@ -56,11 +57,17 @@ Category.init(
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
+    deletedAt: {
+      type:DataTypes.DATE,
+      allowNull:true,
+      defaultValue:null,
+    }
   },
   {
     sequelize,
     tableName: 'categories',
     timestamps: true,
+    paranoid:true,
   }
 );
 

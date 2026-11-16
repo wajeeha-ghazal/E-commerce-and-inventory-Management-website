@@ -16,8 +16,8 @@ export const config = {
     password: process.env.DB_PASSWORD || '',
   },
   jwt: {
-    secret: process.env.JWT_SECRET || 'fallback_secret_for_development_mode_only_123',
-    expiresIn: process.env.JWT_EXPIRES_IN || '7d',
+    secret: process.env.JWT_SECRET || '',
+    expiresIn: process.env.JWT_EXPIRES_IN || '1d',
   },
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   cookieName: process.env.COOKIE_NAME || 'token',

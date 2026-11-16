@@ -5,6 +5,7 @@ export interface CategoryDTO {
   description: string;
   createdAt?: string;
   updatedAt?: string;
+  deletedAt?: string | null;
 }
 
 export interface ProductDTO {

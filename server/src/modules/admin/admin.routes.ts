@@ -33,6 +33,7 @@ router.get('/categories', adminController.getCategories);
 router.post('/categories', createCategoryValidator, validate, adminController.createCategory);
 router.put('/categories/:id', updateCategoryValidator, validate, adminController.updateCategory);
 router.delete('/categories/:id', adminController.deleteCategory);
+router.patch('/categories/:id/restore', adminController.restoreCategory);
 
 // 4. Global Order Management
 router.get('/orders', adminController.getOrders);

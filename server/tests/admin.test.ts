@@ -58,7 +58,7 @@ describe('Admin API & Dashboard Endpoints', () => {
       await Product.destroy({ where: { id: createdProductId }, force: true });
     }
     if (createdCategoryId) {
-      await Category.destroy({ where: { id: createdCategoryId } });
+      await Category.destroy({ where: { id: createdCategoryId }, force: true });
     }
     await sequelize.close();
   });
@@ -198,6 +198,86 @@ describe('Admin API & Dashboard Endpoints', () => {
       const catalogRes = await request(app).get(`/api/products/${createdProductId}`);
       expect(catalogRes.status).toBe(200);
       expect(catalogRes.body.data.id).toBe(createdProductId);
+    });
+
+    it('should return 409 Conflict when trying to delete category with active products', async () => {
+      const res = await request(app)
+        .delete(`/api/admin/categories/${createdCategoryId}`)
+        .set('Cookie', adminCookie);
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/active product/i);
+    });
+
+    it('should soft-delete product and then soft-delete category without FK constraint error', async () => {
+      // 1. Soft-delete the product
+      const delProdRes = await request(app)
+        .delete(`/api/admin/products/${createdProductId}`)
+        .set('Cookie', adminCookie);
+      expect(delProdRes.status).toBe(200);
+
+      // 2. Soft-delete the category
+      const delCatRes = await request(app)
+        .delete(`/api/admin/categories/${createdCategoryId}`)
+        .set('Cookie', adminCookie);
+      expect(delCatRes.status).toBe(200);
+      expect(delCatRes.body.success).toBe(true);
+    });
+
+    it('should return 409 Conflict when trying to restore product whose category is deleted', async () => {
+      const res = await request(app)
+        .patch(`/api/admin/products/${createdProductId}/restore`)
+        .set('Cookie', adminCookie);
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.message).toMatch(/category.*is deleted/i);
+    });
+
+    it('should restore category and then allow restoring product', async () => {
+      // 1. Restore category
+      const restoreCatRes = await request(app)
+        .patch(`/api/admin/categories/${createdCategoryId}/restore`)
+        .set('Cookie', adminCookie);
+      expect(restoreCatRes.status).toBe(200);
+      expect(restoreCatRes.body.success).toBe(true);
+
+      // 2. Restore product
+      const restoreProdRes = await request(app)
+        .patch(`/api/admin/products/${createdProductId}/restore`)
+        .set('Cookie', adminCookie);
+      expect(restoreProdRes.status).toBe(200);
+      expect(restoreProdRes.body.success).toBe(true);
+    });
+
+    it('should reject restoring category if another active category has the same name or slug', async () => {
+      // 1. Soft-delete created product and category again
+      await request(app).delete(`/api/admin/products/${createdProductId}`).set('Cookie', adminCookie);
+      await request(app).delete(`/api/admin/categories/${createdCategoryId}`).set('Cookie', adminCookie);
+
+      // 2. Create another category with same slug
+      const catSlug = `duplicate-slug-${Date.now()}`;
+      const duplicateRes = await request(app)
+        .post('/api/admin/categories')
+        .set('Cookie', adminCookie)
+        .send({
+          name: 'Handcrafted Fine Jewelry', // Same name as createdCategoryId
+          slug: catSlug,
+          description: 'Conflict category',
+        });
+      expect(duplicateRes.status).toBe(201);
+      const duplicateCatId = duplicateRes.body.data.id;
+
+      // 3. Attempt to restore old category -> should return 409 Conflict
+      const restoreConflictRes = await request(app)
+        .patch(`/api/admin/categories/${createdCategoryId}/restore`)
+        .set('Cookie', adminCookie);
+      expect(restoreConflictRes.status).toBe(409);
+      expect(restoreConflictRes.body.success).toBe(false);
+
+      // Clean up duplicate category
+      await Category.destroy({ where: { id: duplicateCatId }, force: true });
     });
   });
 

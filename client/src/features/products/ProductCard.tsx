@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, Button } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import type { ProductDTO } from '@ecomm/shared/src/product';
 import StockBadge from '../../components/ui/StockBadge';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
-import { addToCart, selectAvailableStock } from '../cart/cartSlice';
+import { addToCart, openCart, selectAvailableStock } from '../cart/cartSlice';
 
 interface ProductCardProps {
   product: ProductDTO;
@@ -12,12 +12,34 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const availableStock = useAppSelector(selectAvailableStock(product));
+  const [hideAddToCartBar, setHideAddToCartBar] = useState(false);
 
   const fallbackImage = 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=400&q=80';
 
+  const handleAddToCart = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      navigate('/register', { state: { from: location } });
+      return;
+    }
+
+    if (availableStock <= 0) return;
+    setHideAddToCartBar(true);
+    dispatch(addToCart({ product, quantity: 1 }));
+    dispatch(openCart());
+  };
+
   return (
-    <Card className="h-100 card-hover card-product-hover border-warm warm-shadow">
+    <Card
+      className={`h-100 card-hover card-product-hover border-warm warm-shadow${hideAddToCartBar ? ' add-to-cart-bar-hidden' : ''}`}
+      onMouseLeave={() => setHideAddToCartBar(false)}
+    >
       {/* Product Image + Hover Add to Cart Bar */}
       <div
         className="position-relative overflow-hidden"
@@ -48,11 +70,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 fontSize: '0.78rem',
               }}
               disabled={availableStock <= 0}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                dispatch(addToCart({ product, quantity: 1 }));
-              }}
+              onClick={handleAddToCart}
             >
               <i className="bi bi-cart-plus me-1" />
               {availableStock <= 0 ? 'Max in Cart' : 'Add to Cart'}

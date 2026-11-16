@@ -9,6 +9,7 @@ function formatCategoryDTO(cat: Category): CategoryDTO {
     description: cat.description ?? '',
     createdAt: cat.createdAt?.toISOString(),
     updatedAt: cat.updatedAt?.toISOString(),
+    deletedAt: cat.deletedAt ? cat.deletedAt.toISOString() : null,
   };
 }
 

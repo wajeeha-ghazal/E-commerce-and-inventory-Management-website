@@ -52,15 +52,17 @@ export const productsService = {
     const offset = (page - 1) * limit;
 
     // Build where clause
-    const where: Record<string, unknown> = {};
-
-    if (params.search) {
-      where['title'] = { [Op.iLike]: `%${params.search}%` };
-    }
-
-    if (params.categoryId) {
-      where['categoryId'] = params.categoryId;
-    }
+    const where = {
+      ...(params.search
+        ? {
+            [Op.or]: [
+              { title: { [Op.iLike]: `%${params.search}%` } },
+              { description: { [Op.iLike]: `%${params.search}%` } },
+            ],
+          }
+        : {}),
+      ...(params.categoryId ? { categoryId: params.categoryId } : {}),
+    };
 
     const { count, rows } = await Product.findAndCountAll({
       where,

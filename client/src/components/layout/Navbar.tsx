@@ -123,15 +123,6 @@ export const MainNavbar: React.FC = () => {
                   <NavDropdown.Item as={Link} to="/orders">
                     <i className="bi bi-box-seam me-2"></i> Order History
                   </NavDropdown.Item>
-                  {user.role === 'admin' && (
-                    <>
-                      <NavDropdown.Divider />
-                      <NavDropdown.Header>Management</NavDropdown.Header>
-                      <NavDropdown.Item as={Link} to="/admin">
-                        <i className="bi bi-speedometer2 me-2"></i> Admin Dashboard
-                      </NavDropdown.Item>
-                    </>
-                  )}
                   <NavDropdown.Divider />
                   <NavDropdown.Item onClick={handleLogout} className="text-danger">
                     <i className="bi bi-box-arrow-right me-2"></i> Sign Out
