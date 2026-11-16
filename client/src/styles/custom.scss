@@ -128,11 +128,6 @@ h4,
     opacity: 1;
   }
 
-  &.add-to-cart-bar-hidden .product-card-hover-bar {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-
   .hover-add-btn {
     background-color: rgba(255, 255, 255, 0.95);
     color: #24201d;

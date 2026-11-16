@@ -1,14 +1,38 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Container } from 'react-bootstrap';
+import { Container, Toast, ToastContainer } from 'react-bootstrap';
+import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import MainNavbar from './Navbar';
 import CartDrawer from '../../features/cart/CartDrawer';
+import { hideCartAddedToast, selectCartToast } from '../../features/cart/cartSlice';
 
 export const RootLayout: React.FC = () => {
+  const dispatch = useAppDispatch();
+  const cartToast = useAppSelector(selectCartToast);
+
   return (
     <div className="d-flex flex-column min-vh-100 bg-cream">
       <MainNavbar />
       <CartDrawer />
+      <ToastContainer
+        position="top-end"
+        containerPosition="fixed"
+        className="p-3"
+        style={{ zIndex: 1100 }}
+      >
+        <Toast
+          key={cartToast.id}
+          show={cartToast.isOpen}
+          onClose={() => dispatch(hideCartAddedToast())}
+          delay={3000}
+          autohide
+        >
+          <Toast.Header>
+            <strong className="me-auto">Added to cart</strong>
+          </Toast.Header>
+          <Toast.Body>Product added to cart successfully.</Toast.Body>
+        </Toast>
+      </ToastContainer>
 
       <main className="flex-grow-1 py-4">
         <Container>

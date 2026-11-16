@@ -12,6 +12,8 @@ export interface CartState {
   items: CartItem[];
   userId: number | null;
   isOpen: boolean;
+  toastId: number;
+  isToastOpen: boolean;
 }
 
 export const getCartStorageKey = (userId?: number | string | null): string =>
@@ -52,6 +54,8 @@ export const mergeCart = (guestItems: CartItem[], userItems: CartItem[]): CartIt
 };
 
 const syncUserCart = (state: CartState, newUserId: number | null) => {
+  if (state.userId === newUserId) return;
+
   if (newUserId !== null) {
     const userItems = loadCartFromStorage(newUserId);
     state.items = mergeCart(state.items, userItems);
@@ -71,6 +75,8 @@ const initialState: CartState = {
   items: loadCartFromStorage(null),
   userId: null,
   isOpen: false,
+  toastId: 0,
+  isToastOpen: false,
 };
 
 export const cartSlice = createSlice({
@@ -140,6 +146,15 @@ export const cartSlice = createSlice({
       state.isOpen = !state.isOpen;
     },
 
+    showCartAddedToast(state) {
+      state.toastId += 1;
+      state.isToastOpen = true;
+    },
+
+    hideCartAddedToast(state) {
+      state.isToastOpen = false;
+    },
+
     setUserId(state, action: PayloadAction<number | null>) {
       syncUserCart(state, action.payload);
     },
@@ -177,6 +192,8 @@ export const {
   openCart,
   closeCart,
   toggleCart,
+  showCartAddedToast,
+  hideCartAddedToast,
   setUserId,
 } = cartSlice.actions;
 
@@ -188,6 +205,11 @@ export const selectCartState = (state: StateWithCart): CartState => state.cart;
 export const selectCartItems = createSelector([selectCartState], (cart): CartItem[] => cart.items);
 
 export const selectCartIsOpen = createSelector([selectCartState], (cart): boolean => cart.isOpen);
+
+export const selectCartToast = createSelector([selectCartState], (cart) => ({
+  id: cart.toastId,
+  isOpen: cart.isToastOpen,
+}));
 
 export const selectCartItemCount = createSelector([selectCartItems], (items): number =>
   items.reduce((total, item) => total + item.quantity, 0)

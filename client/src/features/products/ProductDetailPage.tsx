@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { Container, Row, Col, Button, Badge, Spinner, Alert, Breadcrumb } from 'react-bootstrap';
 import { useAppDispatch, useAppSelector } from '../../app/hooks';
 import { fetchProductById, clearSelected } from './productSlice';
@@ -11,19 +11,12 @@ const ProductDetailPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { selected: product, detailStatus, error } = useAppSelector((s) => s.products);
-  const { isAuthenticated } = useAppSelector((state) => state.auth);
-  const location = useLocation();
 
   const cartItem = useAppSelector(selectCartItemByProductId(product?.id ?? -1));
   const inCartQty = cartItem?.quantity ?? 0;
   const availableToAdd = product ? Math.max(0, product.stock - inCartQty) : 0;
 
   const handleAddToCart = () => {
-    // If not logged in, redirect to register
-    if (!isAuthenticated) {
-      navigate('/register', { state: { from: location } });
-      return;
-    }
     if (!product || availableToAdd <= 0) return;
     dispatch(addToCart({ product, quantity: 1 }));
     dispatch(openCart());
