@@ -13,9 +13,12 @@ function formatCategoryDTO(cat: Category): CategoryDTO {
   };
 }
 
-export const categoriesService = {
+export class CategoriesService {
   async getAll(): Promise<CategoryDTO[]> {
     const rows = await Category.findAll({ order: [['name', 'ASC']] });
     return rows.map(formatCategoryDTO);
-  },
-};
+  }
+}
+
+export const categoriesService = new CategoriesService();
+export default categoriesService;

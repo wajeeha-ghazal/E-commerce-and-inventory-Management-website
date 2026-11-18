@@ -35,7 +35,6 @@ export const CategoryModal: React.FC<CategoryModalProps> = ({
       slug: category?.slug || '',
       description: category?.description || '',
     }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     [category, show]
   );
 

@@ -11,9 +11,11 @@ export const ordersController = {
 
     const idempotencyKey =
       (req.headers['idempotency-key'] as string) ||
-      (req.body.idempotencyKey as string) ||
       undefined;
 
+    if (idempotencyKey && idempotencyKey.length > 100) {
+      throw new AppError(400, 'Idempotency-Key is too long');
+    }
     const { items, shippingAddress } = req.body;
 
     const order = await ordersService.createOrder(

@@ -1,73 +1,12 @@
+import { QueryTypes, Transaction } from 'sequelize';
 import { sequelize, Order, OrderItem, Product } from '../../db/models';
 import { TAX_RATE } from '@ecomm/shared';
 import type { CheckoutInput, OrderDTO } from '@ecomm/shared';
 import { AppError } from '../../utils/AppError';
 
-interface IdempotencyEntry {
-  promise?: Promise<OrderDTO>;
-  response?: OrderDTO;
-  createdAt: number;
-}
-
-const idempotencyCache = new Map<string, IdempotencyEntry>();
-const IDEMPOTENCY_TTL_MS = 10 * 60 * 1000; // 10 minutes
-
-// Periodic cleanup of expired idempotency entries
-setInterval(() => {
-  const cutoff = Date.now() - IDEMPOTENCY_TTL_MS;
-  for (const [key, entry] of idempotencyCache.entries()) {
-    if (entry.createdAt < cutoff) {
-      idempotencyCache.delete(key);
-    }
-  }
-}, 60 * 1000).unref();
-
 export class OrdersService {
-  /**
-   * Creates an order within a managed transaction.
-   * Row locks products in ascending ID order to prevent deadlocks under concurrent requests.
-   */
-  async createOrder(
-    userId: number,
-    input: CheckoutInput,
-    idempotencyKey?: string
-  ): Promise<OrderDTO> {
-    if (idempotencyKey) {
-      const cacheKey = `${userId}:${idempotencyKey}`;
-      const existing = idempotencyCache.get(cacheKey);
-      if (existing) {
-        if (existing.response) {
-          return existing.response;
-        }
-        if (existing.promise) {
-          return await existing.promise;
-        }
-      }
 
-      const execPromise = this.executeOrderTransaction(userId, input);
-      idempotencyCache.set(cacheKey, {
-        promise: execPromise,
-        createdAt: Date.now(),
-      });
-
-      try {
-        const order = await execPromise;
-        const entry = idempotencyCache.get(cacheKey);
-        if (entry) {
-          entry.response = order;
-          delete entry.promise;
-        }
-        return order;
-      } catch (err) {
-        idempotencyCache.delete(cacheKey);
-        throw err;
-      }
-    }
-
-    return this.executeOrderTransaction(userId, input);
-  }
-
-  private async executeOrderTransaction(userId: number, input: CheckoutInput): Promise<OrderDTO> {
+  async createOrder(userId: number, input: CheckoutInput, idempotencyKey?: string): Promise<OrderDTO> {
     const { items, shippingAddress } = input;
 
     if (!items || items.length === 0) {
@@ -85,13 +24,43 @@ export class OrdersService {
     );
 
     return await sequelize.transaction(async (t) => {
+      if (idempotencyKey) {
+        const claimed = await sequelize.query<{ id: number }>(
+          `INSERT INTO idempotency_keys ("userId", "key")
+           VALUES (:userId, :key)
+           ON CONFLICT ("userId", "key") DO NOTHING
+           RETURNING id`,
+          {
+            replacements: { userId, key: idempotencyKey },
+            type: QueryTypes.SELECT,
+            transaction: t,
+          }
+        );
+
+        if (claimed.length === 0) {
+          // Key already used and committed: return the original order, touch nothing else
+          const [row] = await sequelize.query<{ orderId: number | null }>(
+            `SELECT "orderId" FROM idempotency_keys WHERE "userId" = :userId AND "key" = :key`,
+            {
+              replacements: { userId, key: idempotencyKey },
+              type: QueryTypes.SELECT,
+              transaction: t,
+            }
+          );
+          if (!row || row.orderId === null) {
+            throw new AppError(409, 'Order is still being processed. Please retry shortly.');
+          }
+          return this.loadFullOrder(row.orderId, t);
+        }
+      }
+
       // Step 1: Sort product IDs ascending ([1, 4, 9]) to prevent deadlocks
       const sortedIds = consolidatedItems.map((i) => i.productId).sort((a, b) => a - b);
 
       // Step 2: Fetch products with row-level lock
       const products = await Product.findAll({
         where: { id: sortedIds },
-        order: [['id', 'ASC']],          
+        order: [['id', 'ASC']],
         lock: t.LOCK.UPDATE,
         transaction: t,
       });
@@ -156,20 +125,36 @@ export class OrdersService {
         });
       }
 
-      // Step 8: Commit transaction. Return newly created order.
-      const fullOrder = await Order.findByPk(order.id, {
-        include: [
+      // Step 8: Link the idempotency key to the order (same transaction)
+      if (idempotencyKey) {
+        await sequelize.query(
+          `UPDATE idempotency_keys SET "orderId" = :orderId
+           WHERE "userId" = :userId AND "key" = :key`,
           {
-            model: OrderItem,
-            as: 'items',
-            include: [{ model: Product, as: 'product' }],
-          },
-        ],
-        transaction: t,
-      });
+            replacements: { orderId: order.id, userId, key: idempotencyKey },
+            transaction: t,
+          }
+        );
+      }
 
-      return fullOrder!.toJSON() as unknown as OrderDTO;
+      // Step 9: Return the full order; everything commits when this callback resolves
+      return this.loadFullOrder(order.id, t);
     });
+  }
+
+  private async loadFullOrder(orderId: number, t?: Transaction): Promise<OrderDTO> {
+    const order = await Order.findByPk(orderId, {
+      include: [
+        {
+          model: OrderItem,
+          as: 'items',
+          include: [{ model: Product, as: 'product' }],
+        },
+      ],
+      transaction: t,
+    });
+
+    return order!.toJSON() as unknown as OrderDTO;
   }
 
   async getOrderById(orderId: number, userId: number, role: string): Promise<OrderDTO> {
