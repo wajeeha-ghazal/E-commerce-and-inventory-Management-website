@@ -75,6 +75,28 @@ Product.belongsToMany(Order, {
   as: 'orders',
 });
 
+// 1:N User <-> Category (Creator)
+User.hasMany(Category, {
+  foreignKey: 'createdBy',
+  as: 'categories',
+  onDelete: 'RESTRICT',
+});
+Category.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator',
+});
+
+// 1:N User <-> Product (Creator)
+User.hasMany(Product, {
+  foreignKey: 'createdBy',
+  as: 'createdProducts',
+  onDelete: 'RESTRICT',
+});
+Product.belongsTo(User, {
+  foreignKey: 'createdBy',
+  as: 'creator',
+});
+
 export { sequelize, User, Profile, Category, Product, Order, OrderItem };
 
 export default {

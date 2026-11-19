@@ -4,13 +4,14 @@ module.exports = {
   async up(queryInterface) {
     const now = new Date();
 
-    await queryInterface.bulkInsert('categories', [
+    const categories = [
       {
         id: 1,
         name: 'Handcrafted Leather Goods',
         slug: 'leather-goods',
         description:
           'Vegetable-tanned full-grain leather wallets, bags, and daily carry accessories.',
+        createdBy: 1,
         createdAt: now,
         updatedAt: now,
       },
@@ -20,6 +21,7 @@ module.exports = {
         slug: 'ceramics-stoneware',
         description:
           'Wheel-thrown mugs, planters, dinnerware, and vases fired in natural earth glazes.',
+        createdBy: 1,
         createdAt: now,
         updatedAt: now,
       },
@@ -29,6 +31,7 @@ module.exports = {
         slug: 'coffee-brewing',
         description:
           'Precision pour-over kettles, hand grinders, drippers, and micro-lot whole bean roasts.',
+        createdBy: 1,
         createdAt: now,
         updatedAt: now,
       },
@@ -38,6 +41,7 @@ module.exports = {
         slug: 'minimalist-workspace',
         description:
           'Solid walnut monitor stands, merino wool desk mats, and ergonomic desk organization.',
+        createdBy: 1,
         createdAt: now,
         updatedAt: now,
       },
@@ -47,10 +51,13 @@ module.exports = {
         slug: 'organic-textiles',
         description:
           'GOTS-certified organic linen shirts, heavy cotton chore coats, and waffle-weave towels.',
+        createdBy: 1,
         createdAt: now,
         updatedAt: now,
       },
-    ]);
+    ];
+
+    await queryInterface.bulkInsert('categories', categories);
 
     await queryInterface.sequelize.query(
       `SELECT setval(pg_get_serial_sequence('categories', 'id'), coalesce(max(id), 1)) FROM categories;`

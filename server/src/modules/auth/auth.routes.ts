@@ -25,15 +25,21 @@ router.put(
   asyncHandler(authController.updateProfile)
 );
 
-// Admin-check route to verify 403 for customer vs admin
-router.get('/admin-check', authenticateJwt, authorizeRoles('admin'), (req, res) => {
-  res.json({
-    success: true,
-    data: {
-      message: 'Admin access granted',
-      user: req.user as any,
-    },
-  });
-});
+// Admin-check route to verify 403 for customer vs admin / super_admin
+router.get(
+  '/admin-check',
+  authenticateJwt,
+  authorizeRoles('admin', 'super_admin'),
+  (req, res) => {
+    res.json({
+      success: true,
+      user: req.user,
+      data: {
+        message: 'Admin access granted',
+        user: req.user,
+      },
+    });
+  }
+);
 
 export default router;

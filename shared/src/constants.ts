@@ -1,7 +1,7 @@
 export const TAX_RATE = 0.08;
 export const DEFAULT_PAGE_SIZE = 12;
 
-export const USER_ROLES = ['customer', 'admin'] as const;
+export const USER_ROLES = ['customer', 'admin', 'super_admin'] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const ORDER_STATUSES = [

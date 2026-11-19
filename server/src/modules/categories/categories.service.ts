@@ -7,6 +7,7 @@ function formatCategoryDTO(cat: Category): CategoryDTO {
     name: cat.name,
     slug: cat.slug,
     description: cat.description ?? '',
+    createdBy: cat.createdBy ?? null,
     createdAt: cat.createdAt?.toISOString(),
     updatedAt: cat.updatedAt?.toISOString(),
     deletedAt: cat.deletedAt ? cat.deletedAt.toISOString() : null,

@@ -3,6 +3,7 @@ export interface CategoryDTO {
   name: string;
   slug: string;
   description: string;
+  createdBy: number | null;
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;
@@ -17,6 +18,7 @@ export interface ProductDTO {
   price: number;
   stock: number;
   imageUrl: string;
+  createdBy: number | null;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string | null;

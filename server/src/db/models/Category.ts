@@ -8,21 +8,24 @@ import {
 } from 'sequelize';
 import sequelize from '../../config/database';
 import type { Product } from './Product';
+import type { User } from './User';
 
 export class Category extends Model<
-  InferAttributes<Category, { omit: 'products' }>,
-  InferCreationAttributes<Category, { omit: 'products' }>
+  InferAttributes<Category, { omit: 'products' | 'creator' }>,
+  InferCreationAttributes<Category, { omit: 'products' | 'creator' }>
 > {
   declare id: CreationOptional<number>;
   declare name: string;
   declare slug: string;
   declare description: CreationOptional<string>;
+  declare createdBy: CreationOptional<number | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date | null>;
 
   // Associations
   declare products?: NonAttribute<Product[]>;
+  declare creator?: NonAttribute<User>;
 }
 
 Category.init(
@@ -46,6 +49,15 @@ Category.init(
       type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: '',
+    },
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'RESTRICT',
     },
     createdAt: {
       type: DataTypes.DATE,

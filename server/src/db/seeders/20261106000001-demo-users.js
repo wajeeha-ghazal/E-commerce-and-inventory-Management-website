@@ -15,7 +15,7 @@ module.exports = {
           id: 1,
           email: 'admin@ecomm.dev',
           passwordHash: adminHash,
-          role: 'admin',
+          role: 'super_admin',
           createdAt: now,
           updatedAt: now,
         },

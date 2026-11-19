@@ -24,6 +24,9 @@ export const AdminDashboardPage: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState<string>('overview');
 
+  const isSuperAdmin = user?.role === 'super_admin';
+  const effectiveActiveTab = !isSuperAdmin && activeTab === 'users' ? 'overview' : activeTab;
+
   // Auto-dismiss banners after 10 seconds
   useEffect(() => {
     if (successMessage) {
@@ -49,7 +52,9 @@ export const AdminDashboardPage: React.FC = () => {
     { key: 'products', label: 'Products & Stock', icon: 'bi-box-seam', count: products.length },
     { key: 'categories', label: 'Categories', icon: 'bi-tags', count: categories.length },
     { key: 'orders', label: 'Orders', icon: 'bi-receipt', count: orders.length },
-    { key: 'users', label: 'Users', icon: 'bi-people', count: users.length },
+    ...(isSuperAdmin
+      ? [{ key: 'users', label: 'Users & Roles', icon: 'bi-people', count: users.length }]
+      : []),
   ];
 
   return (
@@ -57,7 +62,9 @@ export const AdminDashboardPage: React.FC = () => {
       {/* Admin Top Banner */}
       <div className="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
         <div>
-          <h1 className="serif-display h2 text-dark mb-1">Welcome StoreAdmin!</h1>
+          <h1 className="serif-display h2 text-dark mb-1">
+            {isSuperAdmin ? 'Welcome SuperAdmin!' : 'Welcome StoreAdmin!'}
+          </h1>
           <p className="text-secondary small mb-0">
             Platform inventory control, product catalog, orders fulfillment, and user access.
           </p>
@@ -65,7 +72,8 @@ export const AdminDashboardPage: React.FC = () => {
         <div className="d-flex align-items-center gap-2">
           <Badge bg="dark" className="px-3 py-2 text-white fs-6 fw-normal rounded-pill">
             <i className="bi bi-shield-check text-success me-1" />
-            Admin: {user?.email}
+            {isSuperAdmin ? 'Super Admin: ' : 'Admin: '}
+            {user?.email}
           </Badge>
         </div>
       </div>
@@ -96,7 +104,7 @@ export const AdminDashboardPage: React.FC = () => {
       )}
 
       {/* Admin Tab Navigation & Content */}
-      <Tab.Container activeKey={activeTab} onSelect={(k) => k && setActiveTab(k)}>
+      <Tab.Container activeKey={effectiveActiveTab} onSelect={(k) => k && setActiveTab(k)}>
         <Nav
           variant="pills"
           className="bg-white border border-warm rounded-3 p-1 mb-4 gap-1 flex-nowrap overflow-x-auto"
@@ -133,9 +141,11 @@ export const AdminDashboardPage: React.FC = () => {
           <Tab.Pane eventKey="orders">
             <OrdersTab />
           </Tab.Pane>
-          <Tab.Pane eventKey="users">
-            <UsersTab />
-          </Tab.Pane>
+          {isSuperAdmin && (
+            <Tab.Pane eventKey="users">
+              <UsersTab />
+            </Tab.Pane>
+          )}
         </Tab.Content>
       </Tab.Container>
     </div>

@@ -43,7 +43,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
       categoryId: product?.categoryId || categories[0]?.id || 1,
       title: product?.title || '',
       description: product?.description || '',
-      sku: product?.sku || `SKU-${Date.now().toString().slice(-6)}`,
+      sku: product?.sku || '',
       price: product ? Number(product.price) : 19.99,
       stock: product ? Number(product.stock) : 10,
       imageUrl: product?.imageUrl || '',

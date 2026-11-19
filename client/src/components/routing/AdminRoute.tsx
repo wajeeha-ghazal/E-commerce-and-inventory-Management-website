@@ -16,7 +16,9 @@ export const AdminRoute: React.FC = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (user?.role !== 'admin') {
+  const isAdminOrSuper = user?.role === 'admin' || user?.role === 'super_admin';
+
+  if (!isAdminOrSuper) {
     return (
       <Container className="py-5">
         <Card
@@ -29,7 +31,7 @@ export const AdminRoute: React.FC = () => {
           <h2 className="serif-display text-danger mb-2">403 Forbidden</h2>
           <p className="text-secondary mb-4">
             You do not have administrative privileges to access this area. Only accounts with the{' '}
-            <strong>admin</strong> role can manage products, categories, and store orders.
+            <strong>admin</strong> or <strong>super_admin</strong> role can manage products, categories, and store orders.
           </p>
           <div className="d-flex justify-content-center gap-2">
             <Link to="/" className="btn btn-terracotta">

@@ -28,10 +28,6 @@ export const OrdersTab: React.FC = () => {
     return orders.slice(start, start + limit);
   }, [orders, page, limit]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [statusFilter]);
-
   const handleStatusChange = async (orderId: number, status: OrderStatus) => {
     await dispatch(updateAdminOrderStatus({ id: orderId, status }));
     dispatch(fetchAdminStats());
@@ -47,7 +43,10 @@ export const OrdersTab: React.FC = () => {
               size="sm"
               variant={statusFilter === 'all' ? 'dark' : 'outline-secondary'}
               className="rounded-pill px-3 py-1 border-warm"
-              onClick={() => setStatusFilter('all')}
+              onClick={() => {
+                setStatusFilter('all');
+                setPage(1);
+              }}
             >
               All
             </Button>
@@ -57,7 +56,10 @@ export const OrdersTab: React.FC = () => {
                 size="sm"
                 variant={statusFilter === st ? 'dark' : 'outline-secondary'}
                 className="rounded-pill px-3 py-1 text-capitalize border-warm"
-                onClick={() => setStatusFilter(st)}
+                onClick={() => {
+                  setStatusFilter(st);
+                  setPage(1);
+                }}
               >
                 {st}
               </Button>

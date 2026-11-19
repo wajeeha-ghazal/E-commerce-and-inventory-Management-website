@@ -14,6 +14,7 @@ import type { CategoryDTO, CreateCategoryInput } from '@ecomm/shared';
 
 export const CategoriesTab: React.FC = () => {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { categories, categoriesLoading } = useAppSelector((state) => state.admin);
 
   const [includeDeleted, setIncludeDeleted] = useState(true);
@@ -23,6 +24,8 @@ export const CategoriesTab: React.FC = () => {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<CategoryDTO | null>(null);
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
 
   useEffect(() => {
     dispatch(fetchAdminCategories(includeDeleted));
@@ -35,10 +38,6 @@ export const CategoriesTab: React.FC = () => {
     const start = (page - 1) * limit;
     return categories.slice(start, start + limit);
   }, [categories, page, limit]);
-
-  useEffect(() => {
-    setPage(1);
-  }, [includeDeleted]);
 
   const handleOpenAdd = () => {
     setEditingCategory(null);
@@ -92,7 +91,10 @@ export const CategoriesTab: React.FC = () => {
               id="toggle-deleted-categories"
               label="Show Soft-Deleted"
               checked={includeDeleted}
-              onChange={(e) => setIncludeDeleted(e.target.checked)}
+              onChange={(e) => {
+                setIncludeDeleted(e.target.checked);
+                setPage(1);
+              }}
               className="small text-muted"
             />
           </div>
@@ -128,6 +130,10 @@ export const CategoriesTab: React.FC = () => {
                 ) : (
                   paginatedCategories.map((c) => {
                     const isDeleted = Boolean(c.deletedAt);
+                    const canModify =
+                      isSuperAdmin ||
+                      (c.createdBy != null && Number(c.createdBy) === Number(currentUser?.id));
+
                     return (
                       <tr key={c.id} className={isDeleted ? 'opacity-75 bg-light' : ''}>
                         <td className="text-muted small">#{c.id}</td>
@@ -150,39 +156,41 @@ export const CategoriesTab: React.FC = () => {
                             </Badge>
                           )}
                         </td>
-                        <td className={`${isDeleted ? 'text-center' : 'text-end pe-4'} text-nowrap`}>
-                          {isDeleted ? (
-                            <Button
-                              variant="outline-success"
-                              size="sm"
-                              className="py-0 px-2"
-                              onClick={() => handleRestore(c)}
-                              title="Restore category"
-                            >
-                              <i className="bi bi-arrow-counterclockwise me-1" /> Restore
-                            </Button>
-                          ) : (
-                            <>
+                        <td className="text-end pe-4 text-nowrap">
+                          {canModify ? (
+                            isDeleted ? (
                               <Button
-                                variant="outline-secondary"
+                                variant="outline-success"
                                 size="sm"
-                                className="me-2 py-1 px-2 border-warm"
-                                onClick={() => handleOpenEdit(c)}
-                                title="Edit details"
+                                className="py-0 px-2"
+                                onClick={() => handleRestore(c)}
+                                title="Restore category"
                               >
-                                <i className="bi bi-pencil" />
+                                <i className="bi bi-arrow-counterclockwise me-1" /> Restore
                               </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                className="py-1 px-2"
-                                onClick={() => handleDelete(c)}
-                                title="Soft-delete category"
-                              >
-                                <i className="bi bi-trash" />
-                              </Button>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  className="me-2 py-1 px-2 border-warm"
+                                  onClick={() => handleOpenEdit(c)}
+                                  title="Edit details"
+                                >
+                                  <i className="bi bi-pencil" />
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  className="py-1 px-2"
+                                  onClick={() => handleDelete(c)}
+                                  title="Soft-delete category"
+                                >
+                                  <i className="bi bi-trash" />
+                                </Button>
+                              </>
+                            )
+                          ) : null}
                         </td>
                       </tr>
                     );

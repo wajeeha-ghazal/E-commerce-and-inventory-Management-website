@@ -11,6 +11,7 @@ function formatCategoryDTO(cat: Category): CategoryDTO {
     name: cat.name,
     slug: cat.slug,
     description: cat.description ?? '',
+    createdBy: cat.createdBy ?? null,
   };
 }
 
@@ -24,6 +25,7 @@ function formatProductDTO(product: Product): ProductDTO {
     price: product.price,
     stock: product.stock,
     imageUrl: product.imageUrl ?? '',
+    createdBy: product.createdBy ?? null,
     createdAt: product.createdAt?.toISOString() ?? '',
     updatedAt: product.updatedAt?.toISOString() ?? '',
     deletedAt: product.deletedAt ? product.deletedAt.toISOString() : null,

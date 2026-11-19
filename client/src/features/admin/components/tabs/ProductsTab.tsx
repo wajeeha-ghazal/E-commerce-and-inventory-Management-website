@@ -14,6 +14,7 @@ import type { ProductDTO, CreateProductInput } from '@ecomm/shared';
 
 export const ProductsTab: React.FC = () => {
   const dispatch = useAppDispatch();
+  const currentUser = useAppSelector((state) => state.auth.user);
   const { products, productsLoading, categories } = useAppSelector((state) => state.admin);
 
   const [search, setSearch] = useState('');
@@ -24,6 +25,8 @@ export const ProductsTab: React.FC = () => {
   // Modal State
   const [modalOpen, setModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<ProductDTO | null>(null);
+
+  const isSuperAdmin = currentUser?.role === 'super_admin';
 
   useEffect(() => {
     dispatch(fetchAdminProducts(includeDeleted));
@@ -46,11 +49,6 @@ export const ProductsTab: React.FC = () => {
     const start = (page - 1) * limit;
     return filteredProducts.slice(start, start + limit);
   }, [filteredProducts, page, limit]);
-
-  // Reset to page 1 on search or filter change
-  useEffect(() => {
-    setPage(1);
-  }, [search, includeDeleted]);
 
   const handleOpenAdd = () => {
     setEditingProduct(null);
@@ -104,7 +102,10 @@ export const ProductsTab: React.FC = () => {
               id="toggle-deleted-products"
               label="Show Soft-Deleted"
               checked={includeDeleted}
-              onChange={(e) => setIncludeDeleted(e.target.checked)}
+              onChange={(e) => {
+                setIncludeDeleted(e.target.checked);
+                setPage(1);
+              }}
               className="small text-muted"
             />
           </div>
@@ -115,7 +116,10 @@ export const ProductsTab: React.FC = () => {
             <Form.Control
               placeholder="Search by title or SKU..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               className="border-warm"
             />
           </InputGroup>
@@ -152,6 +156,10 @@ export const ProductsTab: React.FC = () => {
                 ) : (
                   paginatedProducts.map((p) => {
                     const isDeleted = Boolean(p.deletedAt);
+                    const canModify =
+                      isSuperAdmin ||
+                      (p.createdBy != null && Number(p.createdBy) === Number(currentUser?.id));
+
                     return (
                       <tr key={p.id} className={isDeleted ? 'opacity-75 bg-light' : ''}>
                         <td>
@@ -204,39 +212,41 @@ export const ProductsTab: React.FC = () => {
                             </Badge>
                           )}
                         </td>
-                        <td className={`${isDeleted ? 'text-center' : 'text-end pe-4'} text-nowrap`}>
-                          {isDeleted ? (
-                            <Button
-                              variant="outline-success"
-                              size="sm"
-                              className="py-0 px-2"
-                              onClick={() => handleRestore(p)}
-                              title="Restore product to catalog"
-                            >
-                              <i className="bi bi-arrow-counterclockwise me-1" /> Restore
-                            </Button>
-                          ) : (
-                            <>
+                        <td className="text-end pe-4 text-nowrap">
+                          {canModify ? (
+                            isDeleted ? (
                               <Button
-                                variant="outline-secondary"
+                                variant="outline-success"
                                 size="sm"
-                                className="me-2 py-1 px-2 border-warm"
-                                onClick={() => handleOpenEdit(p)}
-                                title="Edit details"
+                                className="py-0 px-2"
+                                onClick={() => handleRestore(p)}
+                                title="Restore product to catalog"
                               >
-                                <i className="bi bi-pencil" />
+                                <i className="bi bi-arrow-counterclockwise me-1" /> Restore
                               </Button>
-                              <Button
-                                variant="outline-danger"
-                                size="sm"
-                                className="py-1 px-2"
-                                onClick={() => handleDelete(p)}
-                                title="Soft-delete product"
-                              >
-                                <i className="bi bi-trash" />
-                              </Button>
-                            </>
-                          )}
+                            ) : (
+                              <>
+                                <Button
+                                  variant="outline-secondary"
+                                  size="sm"
+                                  className="me-2 py-1 px-2 border-warm"
+                                  onClick={() => handleOpenEdit(p)}
+                                  title="Edit details"
+                                >
+                                  <i className="bi bi-pencil" />
+                                </Button>
+                                <Button
+                                  variant="outline-danger"
+                                  size="sm"
+                                  className="py-1 px-2"
+                                  onClick={() => handleDelete(p)}
+                                  title="Soft-delete product"
+                                >
+                                  <i className="bi bi-trash" />
+                                </Button>
+                              </>
+                            )
+                          ) : null}
                         </td>
                       </tr>
                     );

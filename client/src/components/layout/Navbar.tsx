@@ -38,7 +38,7 @@ export const MainNavbar: React.FC = () => {
             <Nav.Link as={Link} to="/" className="text-dark fw-medium px-3">
               Catalog
             </Nav.Link>
-            {user?.role === 'admin' ? (
+            {user?.role === 'admin' || user?.role === 'super_admin' ? (
               <Nav.Link as={Link} to="/admin" className="text-dark fw-medium px-3">
                 <i className="bi bi-shield-lock me-1"></i>
                 Admin Portal

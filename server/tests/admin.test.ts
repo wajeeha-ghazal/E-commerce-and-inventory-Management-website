@@ -334,19 +334,15 @@ describe('Admin API & Dashboard Endpoints', () => {
       expect(user).not.toHaveProperty('passwordHash');
     });
 
-    it('should forbid demoting an admin account to customer', async () => {
-      const usersRes = await request(app).get('/api/admin/users').set('Cookie', adminCookie);
-      const adminUser = usersRes.body.data.find((u: { role: string }) => u.role === 'admin');
-      expect(adminUser).toBeDefined();
-
+    it('should forbid changing own role', async () => {
       const res = await request(app)
-        .patch(`/api/admin/users/${adminUser.id}/role`)
+        .patch(`/api/admin/users/1/role`)
         .set('Cookie', adminCookie)
-        .send({ role: 'customer' });
+        .send({ role: 'admin' });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
-      expect(res.body.error.message).toMatch(/cannot be demoted/i);
+      expect(res.body.error.message).toMatch(/cannot change your own role/i);
     });
   });
 });

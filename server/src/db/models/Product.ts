@@ -9,10 +9,11 @@ import {
 import sequelize from '../../config/database';
 import type { Category } from './Category';
 import type { OrderItem } from './OrderItem';
+import type { User } from './User';
 
 export class Product extends Model<
-  InferAttributes<Product, { omit: 'category' | 'orderItems' }>,
-  InferCreationAttributes<Product, { omit: 'category' | 'orderItems' }>
+  InferAttributes<Product, { omit: 'category' | 'orderItems' | 'creator' }>,
+  InferCreationAttributes<Product, { omit: 'category' | 'orderItems' | 'creator' }>
 > {
   declare id: CreationOptional<number>;
   declare categoryId: number;
@@ -22,6 +23,7 @@ export class Product extends Model<
   declare price: number;
   declare stock: number;
   declare imageUrl: CreationOptional<string>;
+  declare createdBy: CreationOptional<number | null>;
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
   declare deletedAt: CreationOptional<Date | null>;
@@ -29,6 +31,7 @@ export class Product extends Model<
   // Associations
   declare category?: NonAttribute<Category>;
   declare orderItems?: NonAttribute<OrderItem[]>;
+  declare creator?: NonAttribute<User>;
 }
 
 Product.init(
@@ -43,6 +46,15 @@ Product.init(
       allowNull: false,
       references: {
         model: 'categories',
+        key: 'id',
+      },
+      onDelete: 'RESTRICT',
+    },
+    createdBy: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
         key: 'id',
       },
       onDelete: 'RESTRICT',

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { adminService } from './admin.service';
 import { asyncHandler } from '../../utils/asyncHandler';
 import { OrderStatus, UserRole } from '@ecomm/shared';
+import { CurrentUser } from './types';
 
 export const adminController = {
   getStats: asyncHandler(async (_req: Request, res: Response) => {
@@ -19,25 +20,29 @@ export const adminController = {
   }),
 
   createProduct: asyncHandler(async (req: Request, res: Response) => {
-    const data = await adminService.createProduct(req.body);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.createProduct(req.body, currentUser);
     res.status(201).json({ success: true, data });
   }),
 
   updateProduct: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.updateProduct(id, req.body);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.updateProduct(id, req.body, currentUser);
     res.json({ success: true, data });
   }),
 
   deleteProduct: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.deleteProduct(id);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.deleteProduct(id, currentUser);
     res.json({ success: true, data, message: 'Product soft-deleted successfully' });
   }),
 
   restoreProduct: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.restoreProduct(id);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.restoreProduct(id, currentUser);
     res.json({ success: true, data, message: 'Product restored successfully' });
   }),
 
@@ -51,25 +56,29 @@ export const adminController = {
   }),
 
   createCategory: asyncHandler(async (req: Request, res: Response) => {
-    const data = await adminService.createCategory(req.body);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.createCategory(req.body, currentUser);
     res.status(201).json({ success: true, data });
   }),
 
   updateCategory: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.updateCategory(id, req.body);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.updateCategory(id, req.body, currentUser);
     res.json({ success: true, data });
   }),
 
   deleteCategory: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.deleteCategory(id);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.deleteCategory(id, currentUser);
     res.json({ success: true, data, message: 'Category soft-deleted successfully' });
   }),
 
   restoreCategory: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const data = await adminService.restoreCategory(id);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.restoreCategory(id, currentUser);
     res.json({ success: true, data, message: 'Category restored successfully' });
   }),
 
@@ -99,8 +108,8 @@ export const adminController = {
 
   updateUserRole: asyncHandler(async (req: Request, res: Response) => {
     const id = parseInt(req.params['id'] ?? '', 10);
-    const { role } = req.body;
-    const data = await adminService.updateUserRole(id, role as UserRole);
+    const currentUser: CurrentUser = { id: req.user!.id, role: req.user!.role };
+    const data = await adminService.updateUserRole(id, req.body.role as UserRole, currentUser);
     res.json({ success: true, data });
   }),
 };

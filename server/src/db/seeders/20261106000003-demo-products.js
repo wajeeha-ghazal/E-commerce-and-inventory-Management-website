@@ -296,7 +296,12 @@ module.exports = {
       },
     ];
 
-    await queryInterface.bulkInsert('products', products);
+    const productsWithCreator = products.map((p) => ({
+      ...p,
+      createdBy: 1,
+    }));
+
+    await queryInterface.bulkInsert('products', productsWithCreator);
 
     await queryInterface.sequelize.query(
       `SELECT setval(pg_get_serial_sequence('products', 'id'), coalesce(max(id), 1)) FROM products;`

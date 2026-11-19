@@ -93,7 +93,7 @@ describe('Auth & RBAC Endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.data.email).toBe('admin@ecomm.dev');
-      expect(res.body.data.role).toBe('admin');
+      expect(['admin', 'super_admin']).toContain(res.body.data.role);
       expect(res.body.data).not.toHaveProperty('passwordHash');
 
       const cookies = res.headers['set-cookie'];
